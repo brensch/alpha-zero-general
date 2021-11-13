@@ -15,7 +15,8 @@ Date: Jan 5, 2018.
 Based on the OthelloGame by Surag Nair.
 """
 class SnakeGame(Game):
-    def __init__(self, n=3):
+    def __init__(self, n=11):
+        print("yo")
         self.n = n
 
     def getInitBoard(self):

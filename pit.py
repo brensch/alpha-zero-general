@@ -1,5 +1,6 @@
 import Arena
 from MCTS import MCTS
+from snake.SnakeLogic import Board
 from snake.SnakeGame import SnakeGame
 from snake.SnakePlayers import *
 from snake.keras.NNet import NNetWrapper as NNet
@@ -22,6 +23,13 @@ human_vs_cpu = True
 #     g = OthelloGame(8)
 
 g = SnakeGame()
+
+b = Board(11, 3)
+print(b.legal_moves_from_point(b.snake_bodies[0][0]))
+
+# g.getInitBoard()
+# print(g.getValidMoves())
+exit()
 # all players
 rp = RandomPlayer(g).play
 # gp = GreedyOthelloPlayer(g).play

@@ -1,9 +1,9 @@
 from __future__ import print_function
+import numpy as np
+from .SnakeLogic import Board
+from Game import Game
 import sys
 sys.path.append('..')
-from Game import Game
-from .SnakeLogic import Board
-import numpy as np
 
 """
 Game class implementation for the game of Snake.
@@ -14,23 +14,26 @@ Date: Jan 5, 2018.
 
 Based on the OthelloGame by Surag Nair.
 """
+
+
 class SnakeGame(Game):
-    def __init__(self, n=11):
-        print("yo")
-        self.n = n
+    def __init__(self, x=11, y=11, number_snakes=2):
+        self.x = x
+        self.y = y
+        self.number_snakes = number_snakes
 
     def getInitBoard(self):
         # return initial board (numpy board)
-        b = Board(self.n)
+        b = Board(self.x, self.y, self.number_snakes)
         return np.array(b.pieces)
 
     def getBoardSize(self):
         # (a,b) tuple
-        return (self.n, self.n)
+        return (self.x, self.y)
 
     def getActionSize(self):
         # return number of actions
-        return self.n*self.n + 1
+        return pow(3, self.number_snakes)
 
     def getNextState(self, board, player, action):
         # if player takes action on board, return next (board,player)
@@ -39,7 +42,7 @@ class SnakeGame(Game):
             return (board, -player)
         b = Board(self.n)
         b.pieces = np.copy(board)
-        move = (int(action/self.n), action%self.n)
+        move = (int(action/self.n), action % self.n)
         b.execute_move(move, player)
         return (b.pieces, -player)
 
@@ -48,12 +51,12 @@ class SnakeGame(Game):
         valids = [0]*self.getActionSize()
         b = Board(self.n)
         b.pieces = np.copy(board)
-        legalMoves =  b.get_legal_moves(player)
-        if len(legalMoves)==0:
-            valids[-1]=1
+        legalMoves = b.get_legal_moves(player)
+        if len(legalMoves) == 0:
+            valids[-1] = 1
             return np.array(valids)
         for x, y in legalMoves:
-            valids[self.n*x+y]=1
+            valids[self.n*x+y] = 1
         return np.array(valids)
 
     def getGameEnded(self, board, player):
@@ -68,7 +71,7 @@ class SnakeGame(Game):
             return -1
         if b.has_legal_moves():
             return 0
-        # draw has a very little value 
+        # draw has a very little value
         return 1e-4
 
     def getCanonicalForm(self, board, player):
@@ -96,31 +99,33 @@ class SnakeGame(Game):
         return board.tostring()
 
     @staticmethod
-    def display(board):
-        n = board.shape[0]
+    def display(board: Board):
+        print(board.x, board.y)
 
-        print("   ", end="")
-        for y in range(n):
-            print (y,"", end="")
+        print("    ", end="")
+        for x in range(board.x):
+            print("{:<1}".format(x), "", end="")
         print("")
         print("  ", end="")
-        for _ in range(n):
-            print ("-", end="-")
+        for _ in range(board.x):
+            print("-", end="-")
         print("--")
-        for y in range(n):
-            print(y, "|",end="")    # print the row #
-            for x in range(n):
-                piece = board[y][x]    # get the piece to print
-                if piece == -1: print("X ",end="")
-                elif piece == 1: print("O ",end="")
+        for y in range(board.y):
+            print("{:<2}".format(y), "|", end="")    # print the row #
+            for x in range(board.x):
+                object_type = -1
+                for snake_count, snake in enumerate(board.snake_bodies):
+                    for snake_piece in snake:
+                        (x_snake,y_snake) = snake_piece
+                        if x == x_snake and y == y_snake:
+                            object_type = snake_count
+                if object_type >= 0:
+                    print("{:<2}".format(object_type), end="")
                 else:
-                    if x==n:
-                        print("-",end="")
-                    else:
-                        print("- ",end="")
+                    print("  ", end="")
             print("|")
 
         print("  ", end="")
-        for _ in range(n):
-            print ("-", end="-")
+        for _ in range(board.x):
+            print("-", end="-")
         print("--")

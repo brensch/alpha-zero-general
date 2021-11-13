@@ -32,17 +32,18 @@ class Board():
         self.x = x
         self.y = y
 
-        starting_x = random.sample(range(x), 2)
-        starting_y = random.sample(range(y), 2)
+        number_squares = x*y
+
+        starting_positions = random.sample(range(number_squares), 2)
 
         # TODO: make this multiplayer. need to get lines on my brain first.
         # list of three identical tuples from the sample above (sample does not overlap)
-        self.snake_bodies = list()
+        self.snake_bodies: list(tuple) = list()
         self.snake_health = list()
         self.snake_is_alive = list()
 
         for i in range(number_snakes):
-            self.snake_bodies.append([(starting_x[i], starting_y[i])]*3)
+            self.snake_bodies.append([(starting_positions[i]%x, int(starting_positions[i]/x))]*3)
             self.snake_health.append(100)
             self.snake_is_alive.append(True)
 
@@ -55,6 +56,9 @@ class Board():
     # put a random snake of length 3 on the board
 
     def legal_moves_from_point(self, point):
+
+        # print("moving from point:", point)
+
         (x, y) = point
         legal_points = list()
 
@@ -76,85 +80,86 @@ class Board():
     def point_is_legal(self, point):
 
         # check bounds
-        (x,y) = point
-        if x < 0 or x >=self.x or y < 0 or y >= self.y:
+        (x, y) = point
+        if x < 0 or x >= self.x or y < 0 or y >= self.y:
             return False
 
         # check other snakes
         for snake in self.snake_bodies:
-            for snake_point in snake:
+            for snake_point in snake[:-1]:
                 # check all points except the last one since that won't be there next time
                 # TODO: it might be there if they snack. account for this.
-                if point == snake_point[:-1]:
+                if point == snake_point:
                     return False
         return True
 
-    def get_legal_moves(self, snake):
-        """Returns all the legal moves for the given snake.
-        (1 for white, -1 for black)
-        @param color not used and came from previous version.        
-        """
-        moves = set()  # stores the legal moves.
+    def get_legal_moves(self, snake_number):
+        "Returns all the legal moves for the given snake_number."
+        return self.legal_moves_from_point(self.snake_bodies[snake_number])
 
-        # Get all the empty squares (color==0)
+    # def has_legal_moves(self):
+    #     for y in range(self.n):
+    #         for x in range(self.n):
+    #             if self[x][y] == 0:
+    #                 return True
+    #     return False
+
+    def is_lost(self, snake):
+        for snake_iter,alive in enumerate(self.snake_is_alive):
+            if snake_iter == snake and alive:
+                return False
+        return True
+
+        # """Check whether the given player has collected a triplet in any direction;
+        # @param color (1=white,-1=black)
+        # """
+        # win = self.n
+        # # check y-strips
         # for y in range(self.n):
+        #     count = 0
         #     for x in range(self.n):
-        #         if self[x][y] == 0:
-        #             newmove = (x, y)
-        #             moves.add(newmove)
-        return list(moves)
+        #         if self[x][y] == color:
+        #             count += 1
+        #     if count == win:
+        #         return True
+        # # check x-strips
+        # for x in range(self.n):
+        #     count = 0
+        #     for y in range(self.n):
+        #         if self[x][y] == color:
+        #             count += 1
+        #     if count == win:
+        #         return True
+        # # check two diagonal strips
+        # count = 0
+        # for d in range(self.n):
+        #     if self[d][d] == color:
+        #         count += 1
+        # if count == win:
+        #     return True
+        # count = 0
+        # for d in range(self.n):
+        #     if self[d][self.n-d-1] == color:
+        #         count += 1
+        # if count == win:
+        #     return True
 
-    def has_legal_moves(self):
-        for y in range(self.n):
-            for x in range(self.n):
-                if self[x][y] == 0:
-                    return True
-        return False
+    def execute_move(self, move, snake_number):
 
-    def is_win(self, color):
-        """Check whether the given player has collected a triplet in any direction; 
-        @param color (1=white,-1=black)
-        """
-        win = self.n
-        # check y-strips
-        for y in range(self.n):
-            count = 0
-            for x in range(self.n):
-                if self[x][y] == color:
-                    count += 1
-            if count == win:
-                return True
-        # check x-strips
-        for x in range(self.n):
-            count = 0
-            for y in range(self.n):
-                if self[x][y] == color:
-                    count += 1
-            if count == win:
-                return True
-        # check two diagonal strips
-        count = 0
-        for d in range(self.n):
-            if self[d][d] == color:
-                count += 1
-        if count == win:
-            return True
-        count = 0
-        for d in range(self.n):
-            if self[d][self.n-d-1] == color:
-                count += 1
-        if count == win:
-            return True
+        # add the new move and remove the last piece
+        self.snake_bodies[snake_number].insert(0,move)
+        self.snake_bodies[snake_number].pop()
+        
+    def check_deaths(self):
+        for snake_number, snake in enumerate(self.snake_bodies):
+            for other_snake_number,other_snake in enumerate(self.snake_bodies):
+                for snake_piece_number, snake_piece in enumerate(other_snake):
+                    # make sure it's not you and your own head
+                    if snake_number == other_snake_number and snake_piece_number == 0:
+                        continue
 
-        return False
-
-    def execute_move(self, move, color):
-        """Perform the given move on the board; 
-        color gives the color pf the piece to play (1=white,-1=black)
-        """
-
-        (x, y) = move
-
-        # Add the piece to the empty square.
-        assert self[x][y] == 0
-        self[x][y] = color
+                    (x,y) = snake_piece
+                    if x < 0 or y < 0 or x >= self.x or y >= self.y or snake[0] == snake_piece:
+                        self.snake_is_alive[snake_number] = False
+                        print("snake in waddup",snake)
+                        print("waddup", self.snake_is_alive[snake_number], snake[0],snake_piece)

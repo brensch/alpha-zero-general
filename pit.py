@@ -1,7 +1,7 @@
 from random import randint
 import Arena
 from MCTS import MCTS
-from snake.SnakeLogic import Board
+from snake.SnakeLogic import Board, generate_starter_snakes
 from snake.SnakeGame import SnakeGame
 from snake.SnakePlayers import *
 from snake.keras.NNet import NNetWrapper as NNet
@@ -25,7 +25,12 @@ human_vs_cpu = True
 
 g = SnakeGame()
 
-b = Board(11, 11)
+starter_snakes = generate_starter_snakes(11,11, 2)
+
+b = Board(x=11, y=11, snakes=starter_snakes, snacks=list(), hazards=list(), turn=0)
+
+# print(b.to_string())
+# exit()
 no_winners = True
 i=0
 while no_winners:
@@ -34,41 +39,46 @@ while no_winners:
     if i%100 == 0:
         print(i)
         g.display(b)
-        for snake in b.snake_bodies:
-            print(snake)
+        for snake in b.snakes:
+            print(snake.body)
     # g.display(b)
 
-    if len(b.snake_bodies) == 0:
+    if len(b.snakes) == 0:
         no_winners = False
     
 
+    # a tuple of the form: (snake_id, move)
     snake_moves = list()
-    for snake_number, snake in enumerate(b.snake_bodies):
-        legal_moves = b.legal_moves_from_point(snake[0])
 
-    # if there are no legal moves just do anything
+    for snake in b.snakes:
+        legal_moves = b.legal_moves_from_point(snake.body[0])
+
+        # if there are no legal moves just do a move up
         if len(legal_moves) == 0:
-            (x,y) = snake[0]
-            snake_moves.append((x,y+1))
+            (x,y) = snake.body[0]
+            snake_moves.append((snake.id,(x,y+1)))
             continue
 
-        snake_moves.append(legal_moves[randint(0, len(legal_moves)-1)])
+        # otherwise add the corresponding move
+        snake_moves.append((snake.id,legal_moves[randint(0, len(legal_moves)-1)]))
 
     # print("snake_moves",snake_moves)
-    for move_number, move in enumerate(snake_moves):
-        b.execute_move(move, move_number)
+    for move_info in snake_moves:
+        (snake_id, move) = move_info
+        b.execute_move(move, snake_id)
 
     b.check_deaths()
 
-    for snake_number in range(len(b.snake_bodies)):
-        if b.is_lost(snake_number):
-            print("snake {} lost".format(snake_number))
+    for snake in b.snakes:
+        if b.is_lost(snake.id):
+            print("snake {} lost".format(snake.id))
             no_winners = False
 
 
 g.display(b)
-for snake_number,snake in enumerate(b.snake_bodies):
-    print(snake_number,snake)
+for snake in b.snakes:
+    print(snake.id, snake.body, snake.died_turn, snake.died_reason)
+print("took {} turns".format(i))
 
 # g.getInitBoard()
 # print(g.getValidMoves())

@@ -1,6 +1,6 @@
 from __future__ import print_function
 import numpy as np
-from .SnakeLogic import Board
+from .SnakeLogic import Board, generate_starter_snakes
 from Game import Game
 import sys
 sys.path.append('..')
@@ -24,8 +24,10 @@ class SnakeGame(Game):
 
     def getInitBoard(self):
         # return initial board (numpy board)
-        b = Board(self.x, self.y, self.number_snakes)
-        return np.array(b.pieces)
+        starter_snakes = generate_starter_snakes(11, 11, 2)
+        b = Board(x=11, y=11, snakes=starter_snakes,
+                  snacks=list(), hazards=list(), turn=0)
+        return b
 
     def getBoardSize(self):
         # (a,b) tuple
@@ -38,65 +40,46 @@ class SnakeGame(Game):
     def getNextState(self, board, player, action):
         # if player takes action on board, return next (board,player)
         # action must be a valid move
-        if action == self.n*self.n:
-            return (board, -player)
-        b = Board(self.n)
-        b.pieces = np.copy(board)
-        move = (int(action/self.n), action % self.n)
-        b.execute_move(move, player)
-        return (b.pieces, -player)
+        board_copy = Board(x=board.x, y=board.y, hazards=board.hazards,
+                           snacks=board.snacks, snakes=board.snakes, turn=board.turn)
+
+        board_copy.execute_move(action, player)
+        return (board_copy, -player)
 
     def getValidMoves(self, board, player):
-        # return a fixed size binary vector
-        valids = [0]*self.getActionSize()
-        b = Board(self.n)
-        b.pieces = np.copy(board)
-        legalMoves = b.get_legal_moves(player)
-        if len(legalMoves) == 0:
-            valids[-1] = 1
-            return np.array(valids)
-        for x, y in legalMoves:
-            valids[self.n*x+y] = 1
-        return np.array(valids)
+        return board.get_legal_moves(player)
 
     def getGameEnded(self, board, player):
-        # return 0 if not ended, 1 if player 1 won, -1 if player 1 lost
-        # player = 1
-        b = Board(self.n)
-        b.pieces = np.copy(board)
 
-        if b.is_win(player):
-            return 1
-        if b.is_win(-player):
-            return -1
-        if b.has_legal_moves():
-            return 0
-        # draw has a very little value
-        return 1e-4
+        return board.is_ended()
 
     def getCanonicalForm(self, board, player):
         # return state if player==1, else return -state if player==-1
-        return player*board
+        return board
 
     def getSymmetries(self, board, pi):
         # mirror, rotational
-        assert(len(pi) == self.n**2+1)  # 1 for pass
-        pi_board = np.reshape(pi[:-1], (self.n, self.n))
-        l = []
+        # TODO:understand wtf is happening here
+        # currently just returning one, i think it means i just flip things and send.
+        return [(board,pi)]
 
-        for i in range(1, 5):
-            for j in [True, False]:
-                newB = np.rot90(board, i)
-                newPi = np.rot90(pi_board, i)
-                if j:
-                    newB = np.fliplr(newB)
-                    newPi = np.fliplr(newPi)
-                l += [(newB, list(newPi.ravel()) + [pi[-1]])]
-        return l
+        # assert(len(pi) == self.n**2+1)  # 1 for pass
+        # pi_board = np.reshape(pi[:-1], (self.n, self.n))
+        # l = []
+
+        # for i in range(1, 5):
+        #     for j in [True, False]:
+        #         newB = np.rot90(board, i)
+        #         newPi = np.rot90(pi_board, i)
+        #         if j:
+        #             newB = np.fliplr(newB)
+        #             newPi = np.fliplr(newPi)
+        #         l += [(newB, list(newPi.ravel()) + [pi[-1]])]
+        # return l
 
     def stringRepresentation(self, board):
         # 8x8 numpy array (canonical board)
-        return board.tostring()
+        return board.to_string()
 
     @staticmethod
     def display(board: Board):
@@ -113,14 +96,14 @@ class SnakeGame(Game):
         for y in range(board.y):
             print("{:<2}".format(y), "|", end="")    # print the row #
             for x in range(board.x):
-                object_type = -1
-                for snake_count, snake in enumerate(board.snake_bodies):
-                    for snake_piece in snake:
-                        (x_snake,y_snake) = snake_piece
+                object_type = 0
+                for snake in board.snakes:
+                    for snake_piece in snake.body:
+                        (x_snake, y_snake) = snake_piece
                         if x == x_snake and y == y_snake:
-                            object_type = snake_count
-                if object_type >= 0:
-                    print("{:<2}".format(object_type), end="")
+                            object_type = snake.id
+                if object_type != 0:
+                    print("{:>2}".format(object_type), end="")
                 else:
                     print("  ", end="")
             print("|")

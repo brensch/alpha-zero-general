@@ -49,29 +49,28 @@ class Coach():
         board = self.game.getInitBoard()
         self.curPlayer = 1
         episodeStep = 0
-        print("yo")
 
         while True:
-            log.info('1')
+            # log.info('1')
             episodeStep += 1
             canonicalBoard = self.game.getCanonicalForm(board, self.curPlayer)
-            log.info('2')
+            # log.info('2')
 
             temp = int(episodeStep < self.args.tempThreshold)
-            log.info('3')
+            # log.info('3')
 
             pi = self.mcts.getActionProb(canonicalBoard, temp=temp)
-            log.info('4')
+            # log.info('4')
             sym = self.game.getSymmetries(canonicalBoard, pi)
-            log.info('5')
+            # log.info('5')
             for b, p in sym:
-                log.info('6')
+                # log.info('6')
                 trainExamples.append([b, self.curPlayer, p, None])
 
             action = np.random.choice(len(pi), p=pi)
-            log.info('7')
+            # log.info('7')
             board, self.curPlayer = self.game.getNextState(board, self.curPlayer, action)
-            log.info('8')
+            # log.info('8')
             r = self.game.getGameEnded(board, self.curPlayer)
 
             if r != 0:

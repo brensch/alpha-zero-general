@@ -17,12 +17,12 @@ Based on the OthelloGame by Surag Nair.
 
 
 class SnakeGame(Game):
-    def __init__(self, x=11, y=11, number_snakes=2):
+    def __init__(self, x=11, y=11, number_snakes=2) -> None:
         self.x = x
         self.y = y
         self.number_snakes = number_snakes
 
-    def getInitBoard(self):
+    def getInitBoard(self) -> np.ndarray:
         # return initial board (numpy board)
         starter_snakes = generate_starter_snakes(11, 11, 2)
         b = Board(x=11, y=11, snakes=starter_snakes,
@@ -37,7 +37,7 @@ class SnakeGame(Game):
         # return number of actions
         return pow(3, self.number_snakes)
 
-    def getNextState(self, board, player, action):
+    def getNextState(self, board: np.ndarray, player, action):
         # if player takes action on board, return next (board,player)
         # action must be a valid move
         board_copy = Board(x=board.x, y=board.y, hazards=board.hazards,
@@ -77,9 +77,9 @@ class SnakeGame(Game):
         #         l += [(newB, list(newPi.ravel()) + [pi[-1]])]
         # return l
 
-    def stringRepresentation(self, board):
+    def stringRepresentation(self, board: np.ndarray):
         # 8x8 numpy array (canonical board)
-        return board.to_string()
+        return board.tostring()
 
     @staticmethod
     def display(board: Board):

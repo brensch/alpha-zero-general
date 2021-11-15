@@ -1,9 +1,11 @@
 from __future__ import print_function
+import random
 import numpy as np
-from .SnakeLogic import Board, generate_starter_snakes
+from .Board import SNAKELAYERBODY, SNAKELAYERHEAD, SNAKELAYERHEALTH, SNAKELAYERTURNSREMAINING, Board, get_layer
 from Game import Game
 import sys
 sys.path.append('..')
+from typing import Tuple
 
 """
 Game class implementation for the game of Snake.
@@ -16,20 +18,38 @@ Based on the OthelloGame by Surag Nair.
 """
 
 
-class SnakeGame(Game):
-    def __init__(self, x=11, y=11, number_snakes=2) -> None:
+
+class Game(Game):
+    def __init__(self, x: int=11, y: int=11, number_snakes: int = 2) -> None:
         self.x = x
         self.y = y
         self.number_snakes = number_snakes
 
     def getInitBoard(self) -> np.ndarray:
-        # return initial board (numpy board)
-        starter_snakes = generate_starter_snakes(11, 11, 2)
-        b = Board(x=11, y=11, snakes=starter_snakes,
-                  snacks=list(), hazards=list(), turn=0)
-        return b
 
-    def getBoardSize(self):
+        number_squares = self.x*self.y
+        starting_positions = random.sample(range(number_squares), 2)
+        b = Board(self.x, self.y, self.number_snakes) 
+
+        for i in range(self.number_snakes):
+            print("calcing snak")
+            print(starting_positions[i] % b.x)
+            print(int(starting_positions[i] / b.x))
+            print(get_layer(i, SNAKELAYERTURNSREMAINING))
+            # set the snake layer we're currently on to have value 3 (ie three pieces) in the random location
+            start_x = starting_positions[i] % b.x
+            start_y = int(starting_positions[i]/b.x)
+            b.pieces[start_x,start_y,get_layer(i, SNAKELAYERTURNSREMAINING)] = 3
+            # we start with head and body all on one spot
+            b.pieces[start_x,start_y,get_layer(i, SNAKELAYERHEAD)] = 1
+            b.pieces[start_x,start_y,get_layer(i, SNAKELAYERBODY)] = 1
+            b.pieces[:,:,get_layer(i, SNAKELAYERHEALTH)] = 100
+
+            # body = [(starting_positions[i] % x, int(starting_positions[i]/x))]*3
+
+        return b.pieces
+
+    def getBoardSize(self) -> Tuple[int, int]:
         # (a,b) tuple
         return (self.x, self.y)
 

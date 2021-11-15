@@ -1,11 +1,13 @@
-from random import randint
+from random import randint, random
+import time
 import Arena
 from MCTS import MCTS
-from snake.SnakeLogic import Board, generate_starter_snakes
-from snake.SnakeGame import SnakeGame
+from snake.Board import SNAKELAYERBODY, SNAKELAYERHEAD, SNAKELAYERHEALTH, SNAKELAYERTURNSREMAINING, Board, get_layer
+from snake.Game import Game
 from snake.SnakePlayers import *
 from snake.keras.NNet import NNetWrapper as NNet
 
+import numpy as np
 
 import numpy as np
 from utils import *
@@ -23,8 +25,53 @@ human_vs_cpu = True
 # else:
 #     g = OthelloGame(8)
 
-g = SnakeGame()
+g = Game()
+board_array = g.getInitBoard()
 
+b = Board()
+b.pieces = board_array
+
+
+for i in range(15):
+    for snake in range(g.number_snakes):
+        moves = b.legal_moves(snake)
+        move = moves[randint(0,len(moves)-1)]
+        b.pieces = b.execute_move(move, snake)
+
+    b.pretty()
+
+# create the adjacent cell mask
+# TODO: this is probably slow, should see if i can do it as a matrix operation
+# mask = np.zeros((g.x, g.y))
+
+        # mask[x+dx][y+dy] = 1
+
+# print(mask)
+
+# masko = np.ma.masked_where(mask == 0, mask)
+# print(masko)
+
+# thang = np.where()
+# print(thang)
+
+# for i in range(g.number_snakes):
+
+
+
+
+# snake0max = np.where()
+
+# (cord) =list(zip(snake0max[0], snake0max[1]))[0]
+# print(cord)
+
+# 
+
+
+
+# print(g.pieces)
+
+
+exit()
 starter_snakes = generate_starter_snakes(11,11, 2)
 
 b = Board(x=11, y=11, snakes=starter_snakes, snacks=list(), hazards=list(), turn=0)

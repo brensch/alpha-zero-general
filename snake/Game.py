@@ -1,11 +1,11 @@
 from __future__ import print_function
+from typing import Tuple
 import random
 import numpy as np
-from .Board import SNAKELAYERBODY, SNAKELAYERHEAD, SNAKELAYERHEALTH, SNAKELAYERTURNSREMAINING, Board, get_layer
+from .Board import SNAKELAYERBODY, SNAKELAYERHEAD, SNAKELAYERHEALTH, SNAKELAYERTURNSREMAINING, TOTALDATALAYERS, TOTALSNAKELAYERS, Board, get_layer
 from Game import Game
 import sys
 sys.path.append('..')
-from typing import Tuple
 
 """
 Game class implementation for the game of Snake.
@@ -18,9 +18,8 @@ Based on the OthelloGame by Surag Nair.
 """
 
 
-
 class Game(Game):
-    def __init__(self, x: int=11, y: int=11, number_snakes: int = 2) -> None:
+    def __init__(self, x: int = 11, y: int = 11, number_snakes: int = 2) -> None:
         self.x = x
         self.y = y
         self.number_snakes = number_snakes
@@ -29,59 +28,95 @@ class Game(Game):
 
         number_squares = self.x*self.y
         starting_positions = random.sample(range(number_squares), 2)
-        b = Board(self.x, self.y, self.number_snakes) 
+        b = Board(self.x, self.y, self.number_snakes)
 
         for i in range(self.number_snakes):
-            print("calcing snak")
-            print(starting_positions[i] % b.x)
-            print(int(starting_positions[i] / b.x))
-            print(get_layer(i, SNAKELAYERTURNSREMAINING))
-            # set the snake layer we're currently on to have value 3 (ie three pieces) in the random location
+
+            # set the snake layer we're currently on to have value 3 (ie three pieces)
+            # in the random location relevant to this snake.
             start_x = starting_positions[i] % b.x
             start_y = int(starting_positions[i]/b.x)
-            b.pieces[start_x,start_y,get_layer(i, SNAKELAYERTURNSREMAINING)] = 3
-            # we start with head and body all on one spot
-            b.pieces[start_x,start_y,get_layer(i, SNAKELAYERHEAD)] = 1
-            b.pieces[start_x,start_y,get_layer(i, SNAKELAYERBODY)] = 1
-            b.pieces[:,:,get_layer(i, SNAKELAYERHEALTH)] = 100
+            b.pieces[start_x, start_y, get_layer(
+                i, SNAKELAYERTURNSREMAINING)] = 3
 
-            # body = [(starting_positions[i] % x, int(starting_positions[i]/x))]*3
+            # we start with head and body all on one spot, and health at 100
+            b.pieces[start_x, start_y, get_layer(i, SNAKELAYERHEAD)] = 1
+            b.pieces[start_x, start_y, get_layer(i, SNAKELAYERBODY)] = 1
+            b.pieces[:, :, get_layer(i, SNAKELAYERHEALTH)] = 100
 
         return b.pieces
 
-    def getBoardSize(self) -> Tuple[int, int]:
-        # (a,b) tuple
-        return (self.x, self.y)
+    def getBoardSize(self) -> Tuple[int, int, int]:
+        return (self.x, self.y, TOTALDATALAYERS + self.number_snakes*TOTALSNAKELAYERS)
 
     def getActionSize(self):
-        # return number of actions
-        return pow(3, self.number_snakes)
+        # all possible actions on the board (even if not currently valid)
+        return self.x*self.y
 
-    def getNextState(self, board: np.ndarray, player, action):
+    def getNextState(self, board: np.ndarray, player: int, action: int):
         # if player takes action on board, return next (board,player)
-        # action must be a valid move
-        board_copy = Board(x=board.x, y=board.y, hazards=board.hazards,
-                           snacks=board.snacks, snakes=board.snakes, turn=board.turn)
+        # action is the index of the chosen action in the 1d list of all possible moves.
+        # this is possibly where i will do >2 players since i can return the next player
+        if action == self.x*self.y:
+            return (board, -player)
+        b = Board(self.x, self.y, self.number_snakes)
+        b.pieces = np.copy(board)
+        move = (action % self.x, int(action/self.x))
+        # TODO:fix
+        # if player == -1:
+        #     player = 0
+        temp_player = player
+        if temp_player == -1:
+            temp_player = 0
+        new_move = b.execute_move(move, temp_player)
+        return (new_move, -player)
 
-        board_copy.execute_move(action, player)
-        return (board_copy, -player)
+    def getValidMoves(self, board: np.ndarray, player):
+        # return boolean array the size of getBoardSize represent whether each move is valid or not
+        valids = [0]*self.getActionSize()
+        b = Board(self.x, self.y, self.number_snakes)
+        b.pieces = np.copy(board)
+        # print("getting valid moves for", player)
+        temp_player = player
+        if temp_player == -1:
+            temp_player = 0
+        legalMoves = b.legal_moves(temp_player)
+        # # this should never happen since we aren't taking other snakes into account
+        # if len(legalMoves) == 0:
+        #     valids[-1] = 1
+        #     return np.array(valids)
+        for x, y in legalMoves:
+            valids[self.x*y+x] = 1
+        return np.array(valids)
 
-    def getValidMoves(self, board, player):
-        return board.get_legal_moves(player)
+    def getGameEnded(self, b: np.ndarray, player):
 
-    def getGameEnded(self, board, player):
+        board = Board(self.x, self.y, self.number_snakes)
+        board.pieces = b
 
-        return board.is_ended()
+        return board.get_result()
 
-    def getCanonicalForm(self, board, player):
-        # return state if player==1, else return -state if player==-1
+    def getCanonicalForm(self, board: np.ndarray, player):
+        # swap players if -1
+        if player == 1:
+            return board
+
+        # needs to be less smoothbrain for multiplayer. probably needs shifting logic
+        first_snake_layers = [TOTALDATALAYERS,
+                             TOTALDATALAYERS+TOTALSNAKELAYERS-1]
+        first = board[:, :, first_snake_layers]
+        second_snake_layers =  [TOTALDATALAYERS+TOTALSNAKELAYERS,
+                              TOTALDATALAYERS+2*TOTALSNAKELAYERS-1]
+        second = board[:, :,second_snake_layers]
+        board[:,:,first_snake_layers] = second
+        board[:,:,second_snake_layers] = first
         return board
 
     def getSymmetries(self, board, pi):
         # mirror, rotational
         # TODO:understand wtf is happening here
         # currently just returning one, i think it means i just flip things and send.
-        return [(board,pi)]
+        return [(board, pi)]
 
         # assert(len(pi) == self.n**2+1)  # 1 for pass
         # pi_board = np.reshape(pi[:-1], (self.n, self.n))

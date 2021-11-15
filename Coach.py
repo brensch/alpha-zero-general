@@ -10,6 +10,8 @@ from tqdm import tqdm
 
 from Arena import Arena
 from MCTS import MCTS
+from snake.Board import Board
+# from snake.Board import Board
 
 log = logging.getLogger(__name__)
 
@@ -47,14 +49,19 @@ class Coach():
         """
         trainExamples = []
         board = self.game.getInitBoard()
+        # print(np.shape(board))
+
         self.curPlayer = 1
         episodeStep = 0
+        print("executing episode")
 
         while True:
             # log.info('1')
             episodeStep += 1
             canonicalBoard = self.game.getCanonicalForm(board, self.curPlayer)
             # log.info('2')
+            # print(np.shape(canonicalBoard))
+
 
             temp = int(episodeStep < self.args.tempThreshold)
             # log.info('3')
@@ -70,8 +77,15 @@ class Coach():
             action = np.random.choice(len(pi), p=pi)
             # log.info('7')
             board, self.curPlayer = self.game.getNextState(board, self.curPlayer, action)
+            print("player",self.curPlayer)
+            b = Board(self.game.x, self.game.y, self.game.number_snakes)
+            b.pieces = board
+            b.pretty()
+
+            # print(np.shape(board))
             # log.info('8')
             r = self.game.getGameEnded(board, self.curPlayer)
+            print(r)
 
             if r != 0:
                 return [(x[0], x[2], r * ((-1) ** (x[1] != self.curPlayer))) for x in trainExamples]
@@ -94,6 +108,7 @@ class Coach():
 
                 for _ in tqdm(range(self.args.numEps), desc="Self Play"):
                     self.mcts = MCTS(self.game, self.nnet, self.args)  # reset search tree
+                    # print("episode")
                     iterationTrainExamples += self.executeEpisode()
 
                 # save the iteration examples to the history 

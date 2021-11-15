@@ -1,3 +1,8 @@
+from typing import Tuple
+
+import numpy as np
+
+
 class Game():
     """
     This class specifies the base Game class. To define your own game, subclass

@@ -30,7 +30,7 @@ class Board():
         self.x = x
         self.y = y
         self.number_snakes = number_snakes
-        self.pieces = np.zeros(
+        self.pieces: np.ndarray = np.zeros(
             (self.x, self.y, TOTALSNAKELAYERS*number_snakes+TOTALDATALAYERS))
 
     def __getitem__(self, index: int) -> np.array:
@@ -40,6 +40,7 @@ class Board():
     def legal_moves(self, snake: int) -> Any:
 
         snake_board = self[:, :, get_layer(snake, SNAKELAYERTURNSREMAINING)]
+        # print("snake in legal_moves",snake)
         max_point = np.where(snake_board == np.amax(snake_board))
 
         x = max_point[0][0]
@@ -56,10 +57,27 @@ class Board():
     #             return False
     #     return True
 
-    # def get_result(self):
-    #     for i in range(self.number_snakes):
+    # get_result returns:
+    # -1: still going
+    # 1e-4: draw
+    # 0+: snake number that won
+    def get_result(self):
+        alive_snakes = list()
+        for snake in range(self.number_snakes):
+            dead_layer = get_layer(snake, SNAKELAYERDEAD)
+            dead = self.pieces[:, :, dead_layer]
+            if not dead[0, 0]:
+                alive_snakes.append(snake)
 
-            
+        if len(alive_snakes) == 0:
+            return 1e-4
+        if len(alive_snakes) == 2:
+            return 0
+        if len(alive_snakes) == 1:
+            # needs to return 1 or -1 for the time being.
+            # this is ugly but i hate it but eventually will change it.
+            # don't know how to make this work for multiple players yet.
+            return alive_snakes[0]+1
 
         # remaining_snakes = list()
         # for snake in self.snakes:
@@ -73,27 +91,48 @@ class Board():
 
     # updates the death arrays
     # we are assuming either a two player game where we stop immediately, or that when i build out the
-    # multiplayer version i will remove dead snakes once they die. 
+    # multiplayer version i will remove dead snakes once they die.
     # means when converting from api i should just completely ignore any snake that is dead.
     # TODO: if a snake has died at the same time you hit its body that's not accounted for here. need to check how this actually works
+
     def find_deaths(self) -> None:
         for snake in range(self.number_snakes):
             head_layer = get_layer(snake, SNAKELAYERHEAD)
-            head = self.pieces[:,:,head_layer]
+            head = self.pieces[:, :, head_layer]
+
+            # get your length for comparison with other snakes
+            body_layer = get_layer(snake, SNAKELAYERBODY)
+            body = self.pieces[:, :, body_layer]
+            snake_length = np.count_nonzero(body)
+
             for other_snake in range(self.number_snakes):
-                other_body_layer = get_layer(other_snake, SNAKELAYERHEAD)
-                other_body = self.pieces[:,:,other_body_layer]
-                death_from_body = np.amax(np.logical_and(head,other_body))
+                # check body collisions
+                other_body_layer = get_layer(other_snake, SNAKELAYERBODY)
+                other_body = self.pieces[:, :, other_body_layer]
+                death_from_body = 1 in np.logical_and(head, other_body)
                 if death_from_body:
                     dead_layer = get_layer(snake, SNAKELAYERDEAD)
-                    self.pieces[:,:,dead_layer] = np.ones((self.x,self.y))
+                    self.pieces[:, :, dead_layer] = np.ones((self.x, self.y))
                     break
 
+                # don't check collision with your own head
+                if snake == other_snake:
+                    continue
 
+                # if they are shorter than you then you can't have died.
+                # don't worry about head since i don't count it in snake_length.
+                other_snake_length = np.count_nonzero(other_body)
+                if other_snake_length < snake_length:
+                    continue
+                # check head collisions
+                other_head_layer = get_layer(other_snake, SNAKELAYERHEAD)
+                other_head = self.pieces[:, :, other_head_layer]
+                death_from_head = 1 in np.logical_and(head, other_head)
+                if death_from_head:
+                    dead_layer = get_layer(snake, SNAKELAYERDEAD)
+                    self.pieces[:, :, dead_layer] = np.ones((self.x, self.y))
 
-            
         return False
-        
 
     def execute_move(self, move: Tuple[int, int], snake: int) -> np.ndarray:
 
@@ -155,8 +194,16 @@ class Board():
                                        ["[{}:{}:{}:{}]".format(snake.body, snake.health, snake.died_turn, snake.died_reason) for snake in self.snakes])
 
     def pretty(self):
-        all_turns_remaining = np.zeros((self.x,self.y))
+        all_turns_remaining = np.zeros((self.x, self.y))
+        all_heads = np.zeros((self.x, self.y))
         for snake in range(self.number_snakes):
-            turns_remaining_layer = get_layer(snake,SNAKELAYERTURNSREMAINING)
-            all_turns_remaining = all_turns_remaining + self.pieces[:,:,turns_remaining_layer]
+            turns_remaining_layer = get_layer(snake, SNAKELAYERTURNSREMAINING)
+            all_turns_remaining = all_turns_remaining + \
+                self.pieces[:, :, turns_remaining_layer]
+            heads_layer = get_layer(snake, SNAKELAYERHEAD)
+            all_heads = all_heads+self.pieces[:, :, heads_layer]
+
+        print("turns")
         print(all_turns_remaining)
+        print("heads")
+        print(all_heads)

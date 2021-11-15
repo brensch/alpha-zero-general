@@ -26,19 +26,43 @@ human_vs_cpu = True
 #     g = OthelloGame(8)
 
 g = Game()
-board_array = g.getInitBoard()
-
 b = Board()
-b.pieces = board_array
+board_array = g.getInitBoard()
+player = 1
+
+moves = g.getValidMoves(board_array,player)
+candidates = np.nonzero(moves)[0]
+move = candidates[randint(0,len(candidates)-1)]
+print(move)
+print(moves)
+next_board_array, player = g.getNextState(board_array,player,move)
+print(player)
+b.pieces = next_board_array
+b.pretty()
+# print(next_board, player)
 
 
-for i in range(15):
-    for snake in range(g.number_snakes):
-        moves = b.legal_moves(snake)
-        move = moves[randint(0,len(moves)-1)]
-        b.pieces = b.execute_move(move, snake)
 
-    b.pretty()
+
+# b = Board()
+# b.pieces = board_array
+
+
+# for i in range(15):
+#     for snake in range(g.number_snakes):
+#         moves = b.legal_moves(snake)
+#         move = moves[randint(0,len(moves)-1)]
+#         b.pieces = b.execute_move(move, snake)
+
+#     b.find_deaths()
+#     result = b.get_result()
+
+#     if result != 0:
+#         print(result)
+#         b.pretty()
+#         break
+
+    # b.pretty()
 
 # create the adjacent cell mask
 # TODO: this is probably slow, should see if i can do it as a matrix operation

@@ -9,7 +9,7 @@ TOTALDATALAYERS = 2
 SNACKLAYER = 0
 HAZARDLAYER = 1
 # each snake layer represents the number of turns left until that location is no longer occupied by the snake
-TOTALSNAKELAYERS = 4
+TOTALSNAKELAYERS = 5
 SNAKELAYERHEAD = 0
 SNAKELAYERBODY = 1
 SNAKELAYERTURNSREMAINING = 2
@@ -61,7 +61,7 @@ class Board():
     # -1: still going
     # 1e-4: draw
     # 0+: snake number that won
-    def get_result(self):
+    def get_result(self, snake: int):
         alive_snakes = list()
         for snake in range(self.number_snakes):
             dead_layer = get_layer(snake, SNAKELAYERDEAD)
@@ -74,10 +74,10 @@ class Board():
         if len(alive_snakes) == 2:
             return 0
         if len(alive_snakes) == 1:
-            # needs to return 1 or -1 for the time being.
-            # this is ugly but i hate it but eventually will change it.
-            # don't know how to make this work for multiple players yet.
-            return alive_snakes[0]+1
+            if alive_snakes[0] == snake:
+                return 1
+
+            return -1
 
         # remaining_snakes = list()
         # for snake in self.snakes:
@@ -111,6 +111,14 @@ class Board():
                 other_body = self.pieces[:, :, other_body_layer]
                 death_from_body = 1 in np.logical_and(head, other_body)
                 if death_from_body:
+                    # if we've died from our own body we should check just in case this is the first move
+                    # only do this here to reduce calculations (ie don't do it first)
+                    turns_remaining_layer = get_layer(snake, SNAKELAYERTURNSREMAINING)
+                    turns_remaining = self.pieces[:, :, turns_remaining_layer]
+                    if snake == other_snake and np.sum(turns_remaining) == 3:
+                        break
+                
+                    # if not, set the dead layer to true
                     dead_layer = get_layer(snake, SNAKELAYERDEAD)
                     self.pieces[:, :, dead_layer] = np.ones((self.x, self.y))
                     break
@@ -202,6 +210,8 @@ class Board():
                 self.pieces[:, :, turns_remaining_layer]
             heads_layer = get_layer(snake, SNAKELAYERHEAD)
             all_heads = all_heads+self.pieces[:, :, heads_layer]
+            dead_layer = get_layer(snake, SNAKELAYERDEAD)
+            print(f"snake {snake} dead: {self.pieces[0, 0, dead_layer]}")
 
         print("turns")
         print(all_turns_remaining)

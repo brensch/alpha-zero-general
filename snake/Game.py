@@ -17,6 +17,11 @@ Date: Jan 5, 2018.
 Based on the OthelloGame by Surag Nair.
 """
 
+def player_to_snake(player: int) -> int:
+    if player == 1:
+        return 0
+    return 1
+
 
 class Game(Game):
     def __init__(self, x: int = 11, y: int = 11, number_snakes: int = 2) -> None:
@@ -30,19 +35,20 @@ class Game(Game):
         starting_positions = random.sample(range(number_squares), 2)
         b = Board(self.x, self.y, self.number_snakes)
 
-        for i in range(self.number_snakes):
+        for snake in range(self.number_snakes):
 
             # set the snake layer we're currently on to have value 3 (ie three pieces)
             # in the random location relevant to this snake.
-            start_x = starting_positions[i] % b.x
-            start_y = int(starting_positions[i]/b.x)
+            start_x = starting_positions[snake] % b.x
+            start_y = int(starting_positions[snake]/b.x)
             b.pieces[start_x, start_y, get_layer(
-                i, SNAKELAYERTURNSREMAINING)] = 3
+                snake, SNAKELAYERTURNSREMAINING)] = 3
 
             # we start with head and body all on one spot, and health at 100
-            b.pieces[start_x, start_y, get_layer(i, SNAKELAYERHEAD)] = 1
-            b.pieces[start_x, start_y, get_layer(i, SNAKELAYERBODY)] = 1
-            b.pieces[:, :, get_layer(i, SNAKELAYERHEALTH)] = 100
+            b.pieces[start_x, start_y, get_layer(snake, SNAKELAYERHEAD)] = 1
+            b.pieces[start_x, start_y, get_layer(snake, SNAKELAYERBODY)] = 1
+            b.pieces[:, :, get_layer(snake, SNAKELAYERHEALTH)] = 100
+
 
         return b.pieces
 
@@ -62,13 +68,9 @@ class Game(Game):
         b = Board(self.x, self.y, self.number_snakes)
         b.pieces = np.copy(board)
         move = (action % self.x, int(action/self.x))
-        # TODO:fix
-        # if player == -1:
-        #     player = 0
-        temp_player = player
-        if temp_player == -1:
-            temp_player = 0
-        new_move = b.execute_move(move, temp_player)
+
+
+        new_move = b.execute_move(move, player_to_snake(player))
         return (new_move, -player)
 
     def getValidMoves(self, board: np.ndarray, player):
@@ -77,10 +79,8 @@ class Game(Game):
         b = Board(self.x, self.y, self.number_snakes)
         b.pieces = np.copy(board)
         # print("getting valid moves for", player)
-        temp_player = player
-        if temp_player == -1:
-            temp_player = 0
-        legalMoves = b.legal_moves(temp_player)
+
+        legalMoves = b.legal_moves(player_to_snake(player))
         # # this should never happen since we aren't taking other snakes into account
         # if len(legalMoves) == 0:
         #     valids[-1] = 1
@@ -93,44 +93,42 @@ class Game(Game):
 
         board = Board(self.x, self.y, self.number_snakes)
         board.pieces = b
+        board.find_deaths()
 
-        return board.get_result()
+
+        return board.get_result(player_to_snake(player))
 
     def getCanonicalForm(self, board: np.ndarray, player):
-        # swap players if -1
-        if player == 1:
-            return board
-
-        # needs to be less smoothbrain for multiplayer. probably needs shifting logic
-        first_snake_layers = [TOTALDATALAYERS,
-                             TOTALDATALAYERS+TOTALSNAKELAYERS-1]
-        first = board[:, :, first_snake_layers]
-        second_snake_layers =  [TOTALDATALAYERS+TOTALSNAKELAYERS,
-                              TOTALDATALAYERS+2*TOTALSNAKELAYERS-1]
-        second = board[:, :,second_snake_layers]
-        board[:,:,first_snake_layers] = second
-        board[:,:,second_snake_layers] = first
         return board
+        # # swap players if -1
+        # if player == 1:
+        #     return board
+
+        # # needs to be less smoothbrain for multiplayer. probably needs shifting logic
+        # first_snake_layers = [TOTALDATALAYERS,
+        #                      TOTALDATALAYERS+TOTALSNAKELAYERS-1]
+        # first = board[:, :, first_snake_layers]
+        # second_snake_layers =  [TOTALDATALAYERS+TOTALSNAKELAYERS,
+        #                       TOTALDATALAYERS+2*TOTALSNAKELAYERS-1]
+        # second = board[:, :,second_snake_layers]
+        # board[:,:,first_snake_layers] = second
+        # board[:,:,second_snake_layers] = first
+        # return board
 
     def getSymmetries(self, board, pi):
         # mirror, rotational
-        # TODO:understand wtf is happening here
-        # currently just returning one, i think it means i just flip things and send.
-        return [(board, pi)]
-
-        # assert(len(pi) == self.n**2+1)  # 1 for pass
-        # pi_board = np.reshape(pi[:-1], (self.n, self.n))
-        # l = []
-
-        # for i in range(1, 5):
-        #     for j in [True, False]:
-        #         newB = np.rot90(board, i)
-        #         newPi = np.rot90(pi_board, i)
-        #         if j:
-        #             newB = np.fliplr(newB)
-        #             newPi = np.fliplr(newPi)
-        #         l += [(newB, list(newPi.ravel()) + [pi[-1]])]
-        # return l
+        assert (len(pi) == self.x * self.y )  # 1 for pass
+        pi_board = np.reshape(pi, (self.x, self.y))
+        return_list = []
+        for i in range(1, 5):
+            for j in [True, False]:
+                newB = np.rot90(board, i)
+                newPi = np.rot90(pi_board, i)
+                if j:
+                    newB = np.fliplr(newB)
+                    newPi = np.fliplr(newPi)
+                return_list += [(newB, list(newPi.ravel()))]
+        return return_list
 
     def stringRepresentation(self, board: np.ndarray):
         # 8x8 numpy array (canonical board)

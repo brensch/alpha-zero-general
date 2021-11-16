@@ -20,24 +20,29 @@ any agent.
 # mini_othello = False  # Play in 6x6 instead of the normal 8x8.
 human_vs_cpu = True
 
+
 # if mini_othello:
 #     g = OthelloGame(6)
 # else:
 #     g = OthelloGame(8)
 
 g = Game()
+nn = NNet(g)
+nn.save_checkpoint()
+nn.load_checkpoint()
 b = Board()
 board_array = g.getInitBoard()
 player = 1
 
+# for i in range(10):
+
 moves = g.getValidMoves(board_array,player)
 candidates = np.nonzero(moves)[0]
 move = candidates[randint(0,len(candidates)-1)]
-print(move)
-print(moves)
 next_board_array, player = g.getNextState(board_array,player,move)
-print(player)
-b.pieces = next_board_array
+print(g.getGameEnded(board_array, player))
+# b.pieces = next_board_array
+b.find_deaths()
 b.pretty()
 # print(next_board, player)
 

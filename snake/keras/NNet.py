@@ -6,12 +6,14 @@ import random
 import numpy as np
 import math
 import sys
+
+from tensorflow.python import keras
 sys.path.append('..')
 from utils import *
 from NeuralNet import NeuralNet
 
 import argparse
-from .SnakeNNet import SnakeNNet as onnet
+from .SnakeNNet import SnakeNNet as snnet
 
 """
 NeuralNet wrapper class for the SnakeNNet.
@@ -33,7 +35,7 @@ args = dotdict({
 
 class NNetWrapper(NeuralNet):
     def __init__(self, game):
-        self.nnet = onnet(game, args)
+        self.nnet = snnet(game, args)
         self.board_x, self.board_y, num_encoders = game.getBoardSize()
         self.action_size = game.getActionSize()
 
@@ -64,17 +66,26 @@ class NNetWrapper(NeuralNet):
         return pi[0], v[0]
 
     def save_checkpoint(self, folder='checkpoint', filename='checkpoint.pth.tar'):
+
         filepath = os.path.join(folder, filename)
+
+
+        print(filepath)
         if not os.path.exists(folder):
             print("Checkpoint Directory does not exist! Making directory {}".format(folder))
             os.mkdir(folder)
         else:
             print("Checkpoint Directory exists! ")
-        self.nnet.model.save_weights(filepath)
+
+        self.nnet.model.save(filepath)
 
     def load_checkpoint(self, folder='checkpoint', filename='checkpoint.pth.tar'):
         # https://github.com/pytorch/examples/blob/master/imagenet/main.py#L98
         filepath = os.path.join(folder, filename)
+        print(filepath)
+
         if not os.path.exists(filepath):
+            print(filepath)
             raise("No model in path '{}'".format(filepath))
-        self.nnet.model.load_weights(filepath)
+        model = keras.models.load_model(filepath)
+        self.nnet.model = model

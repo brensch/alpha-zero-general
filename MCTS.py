@@ -3,6 +3,8 @@ import math
 
 import numpy as np
 
+from snake.Board import Board
+
 EPS = 1e-8
 
 log = logging.getLogger(__name__)
@@ -34,6 +36,10 @@ class MCTS():
             probs: a policy vector where the probability of the ith action is
                    proportional to Nsa[(s,a)]**(1./temp)
         """
+        # print("inside")
+        # b = Board(self.game.x, self.game.y, self.game.number_snakes)
+        # b.pieces = canonicalBoard
+        # b.pretty()
         # log.info("11")
         for i in range(self.args.numMCTSSims):
             # log.info(i)
@@ -54,6 +60,7 @@ class MCTS():
             return probs
 
         counts = [x ** (1. / temp) for x in counts]
+        # print(counts)
         counts_sum = float(sum(counts))
         probs = [x / counts_sum for x in counts]
         return probs
@@ -78,10 +85,26 @@ class MCTS():
             v: the negative of the value of the current canonicalBoard
         """
 
+        # print("search")
+        # b = Board(self.game.x, self.game.y, self.game.number_snakes)
+        # b.pieces = canonicalBoard
+        # b.pretty()
+
         s = self.game.stringRepresentation(canonicalBoard)
 
         if s not in self.Es:
             self.Es[s] = self.game.getGameEnded(canonicalBoard, 1)
+        
+        # b = Board(self.game.x, self.game.y, self.game.number_snakes)
+        # b.pieces = canonicalBoard
+        # b.pretty()
+
+        # print("search 2",self.Es[s])
+        # b = Board(self.game.x, self.game.y, self.game.number_snakes)
+        # b.pieces = canonicalBoard
+        # b.pretty()
+        # exit()
+
         if self.Es[s] != 0:
             # terminal node
             return -self.Es[s]
@@ -106,6 +129,7 @@ class MCTS():
 
             self.Vs[s] = valids
             self.Ns[s] = 0
+            # print(v)
             return -v
 
         valids = self.Vs[s]
@@ -127,7 +151,11 @@ class MCTS():
 
         a = best_act
         next_s, next_player = self.game.getNextState(canonicalBoard, 1, a)
+        # print(next_player)
         next_s = self.game.getCanonicalForm(next_s, next_player)
+        # b = Board(self.game.x, self.game.y, self.game.number_snakes)
+        # b.pieces = next_s
+        # b.pretty()
 
         v = self.search(next_s)
 

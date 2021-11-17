@@ -1,5 +1,7 @@
 from random import randint, random
 import time
+
+from numpy.ma.core import where
 import Arena
 from MCTS import MCTS
 from snake.Board import SNAKELAYERBODY, SNAKELAYERHEAD, SNAKELAYERHEALTH, SNAKELAYERTURNSREMAINING, Board, get_layer
@@ -8,6 +10,8 @@ from snake.SnakePlayers import *
 from snake.keras.NNet import NNetWrapper as NNet
 
 import numpy as np
+import numpy.ma as ma
+
 
 import numpy as np
 from utils import *
@@ -26,24 +30,47 @@ human_vs_cpu = True
 # else:
 #     g = OthelloGame(8)
 
+# a = np.array([[4,2,3,2], [2,0,3,2], [1,0,0,2]])
+# minval = np.argmin(ma.masked_where(a==0, a))
+# print(minval)
+# print(a)
+
+# exit()
+
 g = Game()
 nn = NNet(g)
-nn.save_checkpoint()
-nn.load_checkpoint()
+# nn.save_checkpoint()
+# nn.load_checkpoint()
 b = Board()
 board_array = g.getInitBoard()
+print(board_array[:,:,0])
+# b.add_snack()
+# print('heer')
+
+# exit()
+
 player = 1
 
-# for i in range(10):
+for i in range(1000):
 
-moves = g.getValidMoves(board_array,player)
-candidates = np.nonzero(moves)[0]
-move = candidates[randint(0,len(candidates)-1)]
-next_board_array, player = g.getNextState(board_array,player,move)
-print(g.getGameEnded(board_array, player))
-# b.pieces = next_board_array
-b.find_deaths()
-b.pretty()
+    print("i", i)
+    moves = g.getValidMoves(board_array,player)
+    candidates = np.nonzero(moves)[0]
+    move = candidates[randint(0,len(candidates)-1)]
+    (next_board_array, next_player) = g.getNextState(board_array,player,move)
+    print("next_Board")
+    ended = g.getGameEnded(next_board_array, next_player)
+    if ended:
+        continue
+
+    board_array = next_board_array
+    player = next_player
+    b.pieces = np.copy(board_array)
+    # b.find_deaths()
+    b.pretty()
+    if ended:
+        print("ended on", i)
+        break
 # print(next_board, player)
 
 

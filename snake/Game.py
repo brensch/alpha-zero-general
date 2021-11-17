@@ -59,19 +59,23 @@ class Game(Game):
         # all possible actions on the board (even if not currently valid)
         return self.x*self.y
 
-    def getNextState(self, board: np.ndarray, player: int, action: int):
+    def getNextState(self, board: np.ndarray, player: int, action: int)-> Tuple[np.ndarray, int]:
         # if player takes action on board, return next (board,player)
         # action is the index of the chosen action in the 1d list of all possible moves.
         # this is possibly where i will do >2 players since i can return the next player
-        if action == self.x*self.y:
-            return (board, -player)
         b = Board(self.x, self.y, self.number_snakes)
         b.pieces = np.copy(board)
         move = (action % self.x, int(action/self.x))
 
 
-        new_move = b.execute_move(move, player_to_snake(player))
-        return (new_move, -player)
+        updated_board = b.execute_move(move, player_to_snake(player))
+        b.pieces = updated_board
+
+        # only add snack on every second turn
+        if player == -1:
+            b.add_snack()
+
+        return (b.pieces, -player)
 
     def getValidMoves(self, board: np.ndarray, player):
         # return boolean array the size of getBoardSize represent whether each move is valid or not
@@ -92,7 +96,7 @@ class Game(Game):
     def getGameEnded(self, b: np.ndarray, player):
 
         board = Board(self.x, self.y, self.number_snakes)
-        board.pieces = b
+        board.pieces = np.copy(b)
         board.find_deaths()
 
 

@@ -3,6 +3,7 @@ from typing import Tuple
 
 import numpy as np
 from numpy.ma.core import where
+import numpy.ma as ma
 
 TOTALDATALAYERS = 2
 
@@ -20,15 +21,16 @@ Any = object()
 
 
 def get_layer(snake: int, layer: int) -> int:
-    return TOTALSNAKELAYERS*snake + layer
+    return TOTALDATALAYERS + TOTALSNAKELAYERS*snake + layer
 
 
 class Board():
 
-    def __init__(self, x=11, y=11, number_snakes: int = 2) -> None:
+    def __init__(self, x=11, y=11, number_snakes: int = 2, prob_snack=0.1) -> None:
         "Set up initial board configuration."
         self.x = x
         self.y = y
+        self.prob_snack = prob_snack
         self.number_snakes = number_snakes
         self.pieces: np.ndarray = np.zeros(
             (self.x, self.y, TOTALSNAKELAYERS*number_snakes+TOTALDATALAYERS))
@@ -51,6 +53,33 @@ class Board():
                 legal_points.append((x+dx, y+dy))
         return legal_points
 
+    def add_snack(self) -> None:
+        roll = random.uniform(0, 1)
+        if roll > self.prob_snack:
+            return
+
+        # get empty squares
+        # add all turn_remaining squares 
+        all_turns_remaining = np.zeros((self.x, self.y))
+        for snake in range(self.number_snakes):
+            turns_remaining_layer = get_layer(snake, SNAKELAYERTURNSREMAINING)
+            turns_remaining = self.pieces[:, :, turns_remaining_layer]
+            all_turns_remaining+=turns_remaining
+
+
+        # find zeros then flatten it
+        blank_spaces = np.argwhere(all_turns_remaining == 0)
+
+
+        # generate a random integer the length of the total blank spaces, and get the location correspond to that number
+        (x,y) = blank_spaces[random.randint(0, len(blank_spaces[:])-1),:]
+
+        # print(self.pieces[:,:,SNACKLAYER])
+
+        self.pieces[x,y,SNACKLAYER] = 1
+        # print(self.pieces[:,:,SNACKLAYER])
+
+
     # def is_lost(self, snake_id):
     #     for snake in self.snakes:
     #         if snake.id == snake_id and snake.died_reason == "":
@@ -61,7 +90,7 @@ class Board():
     # -1: still going
     # 1e-4: draw
     # 0+: snake number that won
-    def get_result(self, snake: int):
+    def get_result(self, snake: int) -> int:
         alive_snakes = list()
         for snake in range(self.number_snakes):
             dead_layer = get_layer(snake, SNAKELAYERDEAD)
@@ -179,7 +208,22 @@ class Board():
         health_layer = get_layer(snake, SNAKELAYERHEALTH)
         temp_board[:, :, health_layer] = temp_board[:, :, health_layer] - 1
 
+        # if our head is now on a snack, update health to 100, remove snack, and give out tail an extra piece
+        eaten_snacks = np.logical_and(temp_board[:, :, head_layer], temp_board[:, :, SNACKLAYER])
+        # if no snacks on our head, return
+        if np.sum(eaten_snacks) == 0:
+            return temp_board
+
+        # remove snack
+        temp_board[:, :, SNACKLAYER] = temp_board[:, :, SNACKLAYER] - temp_board[:, :, head_layer]
+        # make health 100
+        temp_board[:, :, health_layer] = 100
+        # add 1 to our tail
+        turns_remaining = temp_board[:, :, turns_remaining_layer]
+        tail_location = np.argmin(ma.masked_where(turns_remaining==0, turns_remaining))
+        temp_board[tail_location%self.x, int(tail_location/self.x), turns_remaining_layer] +=1
         return temp_board
+
 
     # def check_deaths(self):
         # for snake in self.snakes:
@@ -202,18 +246,22 @@ class Board():
                                        ["[{}:{}:{}:{}]".format(snake.body, snake.health, snake.died_turn, snake.died_reason) for snake in self.snakes])
 
     def pretty(self):
+        pieces = np.copy(self.pieces)
         all_turns_remaining = np.zeros((self.x, self.y))
         all_heads = np.zeros((self.x, self.y))
         for snake in range(self.number_snakes):
             turns_remaining_layer = get_layer(snake, SNAKELAYERTURNSREMAINING)
             all_turns_remaining = all_turns_remaining + \
-                self.pieces[:, :, turns_remaining_layer]
+                pieces[:, :, turns_remaining_layer]
             heads_layer = get_layer(snake, SNAKELAYERHEAD)
-            all_heads = all_heads+self.pieces[:, :, heads_layer]
+            all_heads = all_heads+pieces[:, :, heads_layer]
             dead_layer = get_layer(snake, SNAKELAYERDEAD)
-            print(f"snake {snake} dead: {self.pieces[0, 0, dead_layer]}")
+            print(f"snake {snake} dead: {pieces[0, 0, dead_layer]}")
 
         print("turns")
         print(all_turns_remaining)
         print("heads")
         print(all_heads)
+        print("food")
+        print( pieces[:, :, SNACKLAYER])
+        print("stop pretty")

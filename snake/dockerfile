@@ -1,0 +1,10 @@
+FROM tensorflow/tensorflow:latest-gpu 
+
+COPY ./snake/requirements.txt .
+
+ENV NVIDIA_VISIBLE_DEVICES all
+ENV NVIDIA_DRIVER_CAPABILITIES compute
+
+RUN pip install -U pip && pip install -r requirements.txt
+
+# CMD "import tensorflow as tf; print(tf.reduce_sum(tf.random.normal([1000, 1000])))"

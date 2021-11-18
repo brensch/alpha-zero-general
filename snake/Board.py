@@ -17,6 +17,8 @@ SNAKELAYERTURNSREMAINING = 2
 SNAKELAYERHEALTH = 3
 SNAKELAYERDEAD = 4
 
+MAXHEALTH = 20
+
 Any = object()
 
 
@@ -208,7 +210,7 @@ class Board():
         health_layer = get_layer(snake, SNAKELAYERHEALTH)
         temp_board[:, :, health_layer] = temp_board[:, :, health_layer] - 1
 
-        # if our head is now on a snack, update health to 100, remove snack, and give out tail an extra piece
+        # if our head is now on a snack, update health to MAXHEALTH, remove snack, and give out tail an extra piece
         eaten_snacks = np.logical_and(temp_board[:, :, head_layer], temp_board[:, :, SNACKLAYER])
         # if no snacks on our head, return
         if np.sum(eaten_snacks) == 0:
@@ -216,8 +218,8 @@ class Board():
 
         # remove snack
         temp_board[:, :, SNACKLAYER] = temp_board[:, :, SNACKLAYER] - temp_board[:, :, head_layer]
-        # make health 100
-        temp_board[:, :, health_layer] = 100
+        # make health MAXHEALTH
+        temp_board[:, :, health_layer] = MAXHEALTH
         # add 1 to our tail
         turns_remaining = temp_board[:, :, turns_remaining_layer]
         tail_location = np.argmin(ma.masked_where(turns_remaining==0, turns_remaining))

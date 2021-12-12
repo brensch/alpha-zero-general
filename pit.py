@@ -4,7 +4,7 @@ import time
 from numpy.ma.core import where
 import Arena
 from MCTS import MCTS
-from snake.Board import SNAKELAYERBODY, SNAKELAYERHEAD, SNAKELAYERHEALTH, SNAKELAYERTURNSREMAINING, Board, get_layer
+from snake.Board import SNAKELAYER, Board
 from snake.Game import Game
 from snake.SnakePlayers import *
 from snake.keras.NNet import NNetWrapper as NNet
@@ -23,9 +23,6 @@ any agent.
 
 # mini_othello = False  # Play in 6x6 instead of the normal 8x8.
 human_vs_cpu = True
-
-
-
 
 
 g = Game()

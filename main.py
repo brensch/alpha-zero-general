@@ -15,7 +15,7 @@ args = dotdict({
     'numIters': 10,
     # Number of complete self-play games to simulate during a new iteration.
     'numEps': 1000,
-    'tempThreshold': 15,        #
+    'tempThreshold': 1,        #
     # During arena playoff, new neural net will be accepted if threshold or more of games are won.
     'updateThreshold': 0.6,
     # Number of game examples to train the neural networks.
@@ -35,7 +35,7 @@ args = dotdict({
 
 def main():
     log.info('Loading %s...', Game.__name__)
-    g = Game(4, 4, 2)
+    g = Game(4, 4)
 
     log.info('Loading %s...', nn.__name__)
     nnet = nn(g)

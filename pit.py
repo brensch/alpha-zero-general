@@ -25,23 +25,20 @@ any agent.
 human_vs_cpu = True
 
 
-
-
-
-g = Game()
+g = Game(x=4, y=4)
 nn = NNet(g)
 
 # all players
 rp = RandomPlayer(g).play
 # gp = GreedyOthelloPlayer(g).play
-hp = HumanTicTacToePlayer(g).play
+hp = HumanPlayer(g).play
 
 #
 
 # nnet players
 n1 = NNet(g)
-n1.load_checkpoint('./pretrained_models/tictactoe/keras',
-                   'best-25eps-25sim-10epch.pth.tar')
+n1.load_checkpoint('./temp',
+                   'best.pth.tar')
 # if mini_othello:
 #     n1.load_checkpoint('./pretrained_models/snake','6x100x25_best.pth.tar')
 # else:
@@ -63,6 +60,6 @@ player2 = hp
 
 #     player2 = n2p  # Player 2 is neural network if it's cpu vs cpu.
 
-arena = Arena.Arena(n1p, player2, g, display=SnakeGame.display)
+arena = Arena.Arena(n1p, player2, g, display=g.display)
 
 print(arena.playGames(2, verbose=True))

@@ -23,6 +23,36 @@ any agent.
 
 # mini_othello = False  # Play in 6x6 instead of the normal 8x8.
 human_vs_cpu = True
+print(range(3))
+
+# a = np.array([[0, 0, 1],
+#               [1, 1, 2],
+#               [4, 5, 1],
+#               [4, 5, 2],
+#               [4, 5, 6],
+#               [4, 5, 7],
+#               [4, 3, 1]])
+
+# a[[[0, 1, 2], [3, 4, 5]], :] = a[[[3, 4, 5], [0, 1, 2]], :]
+# print(a)
+
+game = Game(4, 4, 2)
+array = game.getInitBoard()
+
+game.getCanonicalForm(array, 1)
+exit()
+
+# zeros = np.zeros((3, 3))
+
+# zeros[0, 0] = 11
+# zeros[0, 2] = 2
+# print(zeros)
+
+for y in reversed(range(3)):
+    for x in range(3):
+        print("{:>2}".format(int(zeros[x, y])), end=" ")
+    print()
+exit()
 
 
 # if mini_othello:
@@ -43,7 +73,7 @@ nn = NNet(g)
 # nn.load_checkpoint()
 b = Board()
 board_array = g.getInitBoard()
-print(board_array[:,:,0])
+print(board_array[:, :, 0])
 # b.add_snack()
 # print('heer')
 
@@ -54,10 +84,10 @@ player = 1
 for i in range(1000):
 
     print("i", i)
-    moves = g.getValidMoves(board_array,player)
+    moves = g.getValidMoves(board_array, player)
     candidates = np.nonzero(moves)[0]
-    move = candidates[randint(0,len(candidates)-1)]
-    (next_board_array, next_player) = g.getNextState(board_array,player,move)
+    move = candidates[randint(0, len(candidates)-1)]
+    (next_board_array, next_player) = g.getNextState(board_array, player, move)
     print("next_Board")
     ended = g.getGameEnded(next_board_array, next_player)
     if ended:
@@ -72,8 +102,6 @@ for i in range(1000):
         print("ended on", i)
         break
 # print(next_board, player)
-
-
 
 
 # b = Board()
@@ -113,33 +141,31 @@ for i in range(1000):
 # for i in range(g.number_snakes):
 
 
-
-
 # snake0max = np.where()
 
 # (cord) =list(zip(snake0max[0], snake0max[1]))[0]
 # print(cord)
 
-# 
-
+#
 
 
 # print(g.pieces)
 
 
 exit()
-starter_snakes = generate_starter_snakes(11,11, 2)
+starter_snakes = generate_starter_snakes(11, 11, 2)
 
-b = Board(x=11, y=11, snakes=starter_snakes, snacks=list(), hazards=list(), turn=0)
+b = Board(x=11, y=11, snakes=starter_snakes,
+          snacks=list(), hazards=list(), turn=0)
 
 # print(b.to_string())
 # exit()
 no_winners = True
-i=0
+i = 0
 while no_winners:
-    i+=1
+    i += 1
     # print("move ", i)
-    if i%100 == 0:
+    if i % 100 == 0:
         print(i)
         g.display(b)
         for snake in b.snakes:
@@ -148,7 +174,6 @@ while no_winners:
 
     if len(b.snakes) == 0:
         no_winners = False
-    
 
     # a tuple of the form: (snake_id, move)
     snake_moves = list()
@@ -158,12 +183,13 @@ while no_winners:
 
         # if there are no legal moves just do a move up
         if len(legal_moves) == 0:
-            (x,y) = snake.body[0]
-            snake_moves.append((snake.id,(x,y+1)))
+            (x, y) = snake.body[0]
+            snake_moves.append((snake.id, (x, y+1)))
             continue
 
         # otherwise add the corresponding move
-        snake_moves.append((snake.id,legal_moves[randint(0, len(legal_moves)-1)]))
+        snake_moves.append(
+            (snake.id, legal_moves[randint(0, len(legal_moves)-1)]))
 
     # print("snake_moves",snake_moves)
     for move_info in snake_moves:

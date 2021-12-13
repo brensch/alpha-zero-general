@@ -42,7 +42,7 @@ class Game(Game):
             start_x = starting_positions[snake] % b.x
             start_y = int(starting_positions[snake]/b.x)
             player = -1
-            if snake is 1:
+            if snake == 1:
                 player = 1
             b.pieces[start_x, start_y, SNAKELAYER] = player * \
                 (3 + MAXHEALTHENCODED)
@@ -74,9 +74,10 @@ class Game(Game):
         updated_board = b.execute_move(move, player)
         b.pieces = updated_board
 
-        # # only add snack on every second turn
-        # if player == -1:
-        #     b.add_snack()
+        # only add snack on every second turn
+        # print("player in getnextstate", player)
+        if player == -1:
+            b.add_snack()
 
         return (b.pieces, -player)
 
@@ -85,13 +86,8 @@ class Game(Game):
         valids = [0]*self.getActionSize()
         b = Board(self.x, self.y)
         b.pieces = np.copy(board)
-        # print("getting valid moves for", player)
 
         legalMoves = b.legal_moves(player)
-        # # this should never happen since we aren't taking other snakes into account
-        # if len(legalMoves) == 0:
-        #     valids[-1] = 1
-        #     return np.array(valids)
         for x, y in legalMoves:
             valids[self.x*y+x] = 1
 
@@ -107,22 +103,12 @@ class Game(Game):
 
     def getCanonicalForm(self, board: np.ndarray, player):
         if player == -1:
-            return -board
+            # only need to invert snake layer, others are informational
+            # board[:, :, SNAKELAYER] = -board[:, :, SNAKELAYER]
+            temp_board = np.copy(board)
+            temp_board[:, :, SNAKELAYER] = -temp_board[:, :, SNAKELAYER]
+            return temp_board
         return board
-        # # swap players if -1
-        # if player == 1:
-        #     return board
-
-        # # needs to be less smoothbrain for multiplayer. probably needs shifting logic
-        # first_snake_layers = [TOTALDATALAYERS,
-        #                      TOTALDATALAYERS+TOTALSNAKELAYERS-1]
-        # first = board[:, :, first_snake_layers]
-        # second_snake_layers =  [TOTALDATALAYERS+TOTALSNAKELAYERS,
-        #                       TOTALDATALAYERS+2*TOTALSNAKELAYERS-1]
-        # second = board[:, :,second_snake_layers]
-        # board[:,:,first_snake_layers] = second
-        # board[:,:,second_snake_layers] = first
-        # return board
 
     def getSymmetries(self, board, pi):
         # mirror, rotational
@@ -144,33 +130,7 @@ class Game(Game):
         return board.tostring()
 
     @staticmethod
-    def display(board: Board):
-        print(board.x, board.y)
-
-        print("    ", end="")
-        for x in range(board.x):
-            print("{:<1}".format(x), "", end="")
-        print("")
-        print("  ", end="")
-        for _ in range(board.x):
-            print("-", end="-")
-        print("--")
-        for y in range(board.y):
-            print("{:<2}".format(y), "|", end="")    # print the row #
-            for x in range(board.x):
-                object_type = 0
-                for snake in board.snakes:
-                    for snake_piece in snake.body:
-                        (x_snake, y_snake) = snake_piece
-                        if x == x_snake and y == y_snake:
-                            object_type = snake.id
-                if object_type != 0:
-                    print("{:>2}".format(object_type), end="")
-                else:
-                    print("  ", end="")
-            print("|")
-
-        print("  ", end="")
-        for _ in range(board.x):
-            print("-", end="-")
-        print("--")
+    def display(board: np.ndarray):
+        b = Board()
+        b.pieces = board
+        b.pretty()

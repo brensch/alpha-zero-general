@@ -4,7 +4,7 @@ import time
 from numpy.ma.core import where
 import Arena
 from MCTS import MCTS
-from snake.Board import SNAKELAYERBODY, SNAKELAYERHEAD, SNAKELAYERHEALTH, SNAKELAYERTURNSREMAINING, Board, get_layer
+from snake.Board import SNAKELAYER, Board
 from snake.Game import Game
 from snake.SnakePlayers import *
 from snake.keras.NNet import NNetWrapper as NNet
@@ -23,7 +23,6 @@ any agent.
 
 # mini_othello = False  # Play in 6x6 instead of the normal 8x8.
 human_vs_cpu = True
-print(range(3))
 
 # a = np.array([[0, 0, 1],
 #               [1, 1, 2],
@@ -36,23 +35,17 @@ print(range(3))
 # a[[[0, 1, 2], [3, 4, 5]], :] = a[[[3, 4, 5], [0, 1, 2]], :]
 # print(a)
 
-game = Game(4, 4, 2)
+game = Game(4, 4)
 array = game.getInitBoard()
 
 game.getCanonicalForm(array, 1)
-exit()
+# exit()
 
 # zeros = np.zeros((3, 3))
 
 # zeros[0, 0] = 11
 # zeros[0, 2] = 2
 # print(zeros)
-
-for y in reversed(range(3)):
-    for x in range(3):
-        print("{:>2}".format(int(zeros[x, y])), end=" ")
-    print()
-exit()
 
 
 # if mini_othello:
@@ -73,7 +66,13 @@ nn = NNet(g)
 # nn.load_checkpoint()
 b = Board()
 board_array = g.getInitBoard()
-print(board_array[:, :, 0])
+b.pieces = board_array
+
+b.pretty()
+
+b.add_snack()
+b.pretty()
+exit()
 # b.add_snack()
 # print('heer')
 
@@ -88,10 +87,14 @@ for i in range(1000):
     candidates = np.nonzero(moves)[0]
     move = candidates[randint(0, len(candidates)-1)]
     (next_board_array, next_player) = g.getNextState(board_array, player, move)
+    print("next player", next_player)
     print("next_Board")
-    ended = g.getGameEnded(next_board_array, next_player)
+    b.pieces = next_board_array
+    b.pretty()
+    ended = g.getGameEnded(next_board_array, player)
     if ended:
-        continue
+        exit()
+        # continue
 
     board_array = next_board_array
     player = next_player

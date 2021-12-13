@@ -25,27 +25,28 @@ any agent.
 human_vs_cpu = True
 
 
-g = Game(x=4, y=4)
+g = Game(x=7, y=7)
 nn = NNet(g)
 
 # all players
 rp = RandomPlayer(g).play
+rp2 = RandomPlayer(g).play
 # gp = GreedyOthelloPlayer(g).play
 hp = HumanPlayer(g).play
 
 #
 
-# nnet players
-n1 = NNet(g)
-n1.load_checkpoint('./temp',
-                   'best.pth.tar')
-# if mini_othello:
-#     n1.load_checkpoint('./pretrained_models/snake','6x100x25_best.pth.tar')
-# else:
-#     n1.load_checkpoint('./pretrained_models/snake','8x8_100checkpoints_best.pth.tar')
-args1 = dotdict({'numMCTSSims': 50, 'cpuct': 1.0})
-mcts1 = MCTS(g, n1, args1)
-def n1p(x): return np.argmax(mcts1.getActionProb(x, temp=0))
+# # nnet players
+# n1 = NNet(g)
+# n1.load_checkpoint('./temp',
+#                    'best.pth.tar')
+# # if mini_othello:
+# #     n1.load_checkpoint('./pretrained_models/snake','6x100x25_best.pth.tar')
+# # else:
+# #     n1.load_checkpoint('./pretrained_models/snake','8x8_100checkpoints_best.pth.tar')
+# args1 = dotdict({'numMCTSSims': 50, 'cpuct': 1.0})
+# mcts1 = MCTS(g, n1, args1)
+# def n1p(x): return np.argmax(mcts1.getActionProb(x, temp=0))
 
 
 player2 = hp
@@ -60,6 +61,6 @@ player2 = hp
 
 #     player2 = n2p  # Player 2 is neural network if it's cpu vs cpu.
 
-arena = Arena.Arena(n1p, player2, g, display=g.display)
+arena = Arena.Arena(rp, rp2, g, display=g.display)
 
 print(arena.playGames(2, verbose=True))

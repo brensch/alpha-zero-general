@@ -70,7 +70,7 @@ class Coach():
             # b.pretty()
             # log.info('2')
             # print(np.shape(canonicalBoard))
-            print(canonicalBoard)
+            # print(canonicalBoard)
 
             temp = int(episodeStep < self.args.tempThreshold)
             # log.info('3')

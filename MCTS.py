@@ -37,7 +37,7 @@ class MCTS():
                    proportional to Nsa[(s,a)]**(1./temp)
         """
 
-        print("temp", temp)
+        # print("temp", temp)
         # print("inside")
         # b = Board(self.game.x, self.game.y, self.game.number_snakes)
         # b.pieces = canonicalBoard
@@ -49,11 +49,14 @@ class MCTS():
         # log.info("12")
 
         s = self.game.stringRepresentation(canonicalBoard)
-        print(s)
+        # print(s)
+        # print("nsa", self.Nsa)
         counts = [self.Nsa[(s, a)] if (
             s, a) in self.Nsa else 0 for a in range(self.game.getActionSize())]
 
-        print("counts:", counts)
+        # print(self.game.pieces)
+
+        # print("counts:", counts)
         # log.info("13")
 
         if temp == 0:
@@ -93,10 +96,12 @@ class MCTS():
         # b = Board(self.game.x, self.game.y, self.game.number_snakes)
         # b.pieces = canonicalBoard
         # b.pretty()
+        # print(canonicalBoard)
 
         s = self.game.stringRepresentation(canonicalBoard)
 
         if s not in self.Es:
+            # print("s not in es")
             self.Es[s] = self.game.getGameEnded(canonicalBoard, 1)
 
         # b = Board(self.game.x, self.game.y, self.game.number_snakes)
@@ -111,6 +116,9 @@ class MCTS():
 
         if self.Es[s] != 0:
             # terminal node
+            # print("terminal node")
+            # print(self.Es[s])
+
             return -self.Es[s]
 
         if s not in self.Ps:

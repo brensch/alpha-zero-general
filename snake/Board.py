@@ -116,15 +116,17 @@ class Board():
         if player == 1:
             player_dead = self.pieces[self.pieces > 0][0] >> 15
             opponent_dead = (-1*self.pieces[self.pieces < 0][0]) >> 15
+            # print("player 1", player_dead, opponent_dead)
         else:
             player_dead = (-1*self.pieces[self.pieces < 0][0]) >> 15
             opponent_dead = self.pieces[self.pieces > 0][0] >> 15
+            # print("player -1", player_dead, opponent_dead)
 
         if player_dead == 0 and opponent_dead == 0:
-            return player
+            return 0
 
         if player_dead == 0 and opponent_dead == 1:
-            return 0
+            return player
 
         if player_dead == 1 and opponent_dead == 0:
             return -player
@@ -219,6 +221,7 @@ class Board():
     def execute_move(self, move: Tuple[int, int], player: int) -> np.ndarray:
 
         (x, y) = move
+        # multiplying by player so everything is positive relative to the current player
         pieces = np.copy(player*self.pieces)
         snacks = np.copy(player*self.pieces[:, :, SNACKLAYER])
         snakes = np.copy(player*self.pieces[:, :, SNAKELAYER])
@@ -232,9 +235,11 @@ class Board():
         # turns_remaining_layer_opponent = get_layer(
         #     -1*player, SNAKELAYERTURNSREMAINING)
         # turns_remaining = snakes[:, :, turns_remaining_layer]
-        # max = np.amax(turns_remaining)
 
-        # increment or decrement depending on which player is moving
+        # get the current value for what should be the head (turns remaining + health)
+        head_value = np.amax(snakes)
+
+        # decrease all positions by 1
         # then set anything with 0 steps remaining to zero to clear out other snake data
         # TODO: figure out the most efficient way to do this.
         # if player == 1:
@@ -294,6 +299,11 @@ class Board():
         # if player == 1:
         snakes = np.subtract(snakes, 1*SNAKEOFFSETHEALTH,
                              where=snakes > 0)
+        # print(health)
+        # print(head_value)
+
+        # add new head now that we've checked for collisions
+        snakes[x, y] = head_value
         # else:
         #     snakes = np.add(snakes, 1*SNAKEOFFSETHEALTH,
         #                     where=snakes < 0)
@@ -307,11 +317,11 @@ class Board():
         # if no snacks on our head, check if we died then return either way. rest of the function is dealing with removing snack.
         if not got_snack:
             # if player == 1:
-            health = snakes[snakes > 0][0]
             # else:
             #     health = -snakes[snakes < 0][0]
+            health = snakes[snakes > 0][0] >> SNAKEOFFSETHEALTH
 
-            if health >> SNAKEOFFSETHEALTH == 0:
+            if health == 0:
                 # check if opponent is on 1 health. since we are taking turns this most likely means it's a draw.
                 # (ie they will die on the next move)
                 # another crude adaptation for simultaneous play that doesn't capture the chance they could get health on that turn.

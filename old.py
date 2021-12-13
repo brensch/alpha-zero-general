@@ -3,8 +3,8 @@ import logging
 import coloredlogs
 
 from Coach import Coach
-from snake.Game import Game
-from snake.keras.NNet import NNetWrapper as nn
+from othello.OthelloGame import OthelloGame as Game
+from othello.pytorch.NNet import NNetWrapper as nn
 from utils import *
 
 log = logging.getLogger(__name__)
@@ -12,7 +12,7 @@ log = logging.getLogger(__name__)
 coloredlogs.install(level='INFO')  # Change this to DEBUG to see more info.
 
 args = dotdict({
-    'numIters': 10,
+    'numIters': 1000,
     # Number of complete self-play games to simulate during a new iteration.
     'numEps': 100,
     'tempThreshold': 15,        #
@@ -20,7 +20,7 @@ args = dotdict({
     'updateThreshold': 0.6,
     # Number of game examples to train the neural networks.
     'maxlenOfQueue': 200000,
-    'numMCTSSims': 10,          # Number of games moves for MCTS to simulate.
+    'numMCTSSims': 25,          # Number of games moves for MCTS to simulate.
     # Number of games to play during arena play to determine if new net will be accepted.
     'arenaCompare': 40,
     'cpuct': 1,
@@ -35,13 +35,14 @@ args = dotdict({
 
 def main():
     log.info('Loading %s...', Game.__name__)
-    g = Game(4, 4)
+    g = Game(6)
 
     log.info('Loading %s...', nn.__name__)
     nnet = nn(g)
 
     if args.load_model:
-        log.info('Loading checkpoint "%s/%s"...', args.load_folder_file)
+        log.info('Loading checkpoint "%s/%s"...',
+                 args.load_folder_file[0], args.load_folder_file[1])
         nnet.load_checkpoint(
             args.load_folder_file[0], args.load_folder_file[1])
     else:

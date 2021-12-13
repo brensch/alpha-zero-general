@@ -36,6 +36,8 @@ class MCTS():
             probs: a policy vector where the probability of the ith action is
                    proportional to Nsa[(s,a)]**(1./temp)
         """
+
+        # print("temp", temp)
         # print("inside")
         # b = Board(self.game.x, self.game.y, self.game.number_snakes)
         # b.pieces = canonicalBoard
@@ -46,10 +48,15 @@ class MCTS():
             self.search(canonicalBoard)
         # log.info("12")
 
-
         s = self.game.stringRepresentation(canonicalBoard)
-        counts = [self.Nsa[(s, a)] if (s, a) in self.Nsa else 0 for a in range(self.game.getActionSize())]
+        # print(s)
+        # print("nsa", self.Nsa)
+        counts = [self.Nsa[(s, a)] if (
+            s, a) in self.Nsa else 0 for a in range(self.game.getActionSize())]
 
+        # print(self.game.pieces)
+
+        # print("counts:", counts)
         # log.info("13")
 
         if temp == 0:
@@ -89,12 +96,14 @@ class MCTS():
         # b = Board(self.game.x, self.game.y, self.game.number_snakes)
         # b.pieces = canonicalBoard
         # b.pretty()
+        # print(canonicalBoard)
 
         s = self.game.stringRepresentation(canonicalBoard)
 
         if s not in self.Es:
+            # print("s not in es")
             self.Es[s] = self.game.getGameEnded(canonicalBoard, 1)
-        
+
         # b = Board(self.game.x, self.game.y, self.game.number_snakes)
         # b.pieces = canonicalBoard
         # b.pretty()
@@ -107,6 +116,9 @@ class MCTS():
 
         if self.Es[s] != 0:
             # terminal node
+            # print("terminal node")
+            # print(self.Es[s])
+
             return -self.Es[s]
 
         if s not in self.Ps:
@@ -122,7 +134,7 @@ class MCTS():
                 # if all valid moves were masked make all valid moves equally probable
 
                 # NB! All valid moves may be masked if either your NNet architecture is insufficient or you've get overfitting or something else.
-                # If you have got dozens or hundreds of these messages you should pay attention to your NNet and/or training process.   
+                # If you have got dozens or hundreds of these messages you should pay attention to your NNet and/or training process.
                 log.error("All valid moves were masked, doing a workaround.")
                 self.Ps[s] = self.Ps[s] + valids
                 self.Ps[s] /= np.sum(self.Ps[s])
@@ -141,9 +153,10 @@ class MCTS():
             if valids[a]:
                 if (s, a) in self.Qsa:
                     u = self.Qsa[(s, a)] + self.args.cpuct * self.Ps[s][a] * math.sqrt(self.Ns[s]) / (
-                            1 + self.Nsa[(s, a)])
+                        1 + self.Nsa[(s, a)])
                 else:
-                    u = self.args.cpuct * self.Ps[s][a] * math.sqrt(self.Ns[s] + EPS)  # Q = 0 ?
+                    u = self.args.cpuct * \
+                        self.Ps[s][a] * math.sqrt(self.Ns[s] + EPS)  # Q = 0 ?
 
                 if u > cur_best:
                     cur_best = u
@@ -160,7 +173,8 @@ class MCTS():
         v = self.search(next_s)
 
         if (s, a) in self.Qsa:
-            self.Qsa[(s, a)] = (self.Nsa[(s, a)] * self.Qsa[(s, a)] + v) / (self.Nsa[(s, a)] + 1)
+            self.Qsa[(s, a)] = (self.Nsa[(s, a)] *
+                                self.Qsa[(s, a)] + v) / (self.Nsa[(s, a)] + 1)
             self.Nsa[(s, a)] += 1
 
         else:

@@ -4,7 +4,7 @@ import time
 from numpy.ma.core import where
 import Arena
 from MCTS import MCTS
-from snake.Board import SNAKELAYERBODY, SNAKELAYERHEAD, SNAKELAYERHEALTH, SNAKELAYERTURNSREMAINING, Board, get_layer
+from snake.Board import SNAKELAYER, Board
 from snake.Game import Game
 from snake.SnakePlayers import *
 from snake.keras.NNet import NNetWrapper as NNet
